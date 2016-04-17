@@ -1,0 +1,7 @@
+"Belegdatum";"Buchungsdatum";"Belegnummernkreis";"Belegnummer";"Buchungstext";"Buchungsbetrag";"Sollkonto";"Habenkonto";"Steuerschlüssel";"Kostenstelle 1";"Kostenstelle 2";"Buchungsbetrag Euro";"Währung"
+29.08.2013;01.09.2013;"B";"6";"Lastschrift Strato";7,99;71003;1210;0;"";"";7,99;"EUR"
+;;"";"";"Kaltmiete";132,14;4210;;9;"310";"";132,14;"EUR"
+;;"";"";"Nebenkosten";61,76;4280;;9;"310";"";61,76;"EUR"
+;;"";"";"Heizung";11,49;4230;;9;"310";"";11,49;"EUR"
+;;"";"";"Strom";35,70;4240;;9;"310";"";35,70;"EUR"
+02.09.2013;10.09.2013;"";"14";"Kopierer Oki MFP MC332";275,07;480;499;0;"";"";275,07;"EUR"

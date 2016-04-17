@@ -1,0 +1,142 @@
+swagger: '2.0'
+info:
+  title: Accountant Service
+  version: '1.0.0'
+schemes:
+  - https
+basePath: '/v1'
+produces:
+  - application/json
+
+paths:
+  /accounting_txs:
+    get:
+      description: 'Lese alle Buchungen'
+      responses:
+        200:
+          description: 'OK'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/accountingData'
+        default:
+          description: 'Error'
+          schema:
+            $ref: '#/definitions/error'
+  /vouchers:
+    get:
+      parameters:
+        - name: 'id'
+          description: 'Buchungsbeleg-Nummer'
+          in: 'query'
+          type: string
+        - name: 'account_number' 
+          description: 'Kontonummer'
+          in: 'query'
+          type: integer
+        - name: 'voucher_date'
+          description: 'Belegdatum'
+          in: 'query'
+          type: string
+          format: date
+      responses:
+        200:
+          description: 'OK'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/voucher'
+        default:
+          description: 'Error'
+          schema:
+            $ref: '#/definitions/error'
+  /verify:
+    get:
+      description: 'Prüfe Buchungsdaten'
+      responses:
+        200:
+          description: 'Alles OK keine Fehler in den Buchungsdaten'
+        418:
+          description: 'Es gibt ein Fehler in den Buchungsdaten'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/corrupt'
+        default:
+          description: 'Es gab ein Fehler dieser hat aber nichts mit den Buchungsdaten zu tun'
+          schema:
+            $ref: '#/definitions/error'
+
+
+definitions:
+  accountingData:
+    type: object
+    properties:
+      id:     
+        type: integer
+        format: int64
+      doc_date:
+        type: string
+        format: timedate
+      date_of_entry:
+        type: string
+        format: date-time
+      doc_number_range:
+        type: string 
+      doc_number:
+        type: string
+      posting_text:
+        type: string
+      amount_posted:
+        type: number
+        format: float
+      debit_account:
+        type: integer
+      credit_account:
+        type: integer
+      tax_code:
+        type: integer
+      cost_unit1:
+        type: string
+      cost_unit2:
+        type: string
+      amount_posted_euro:
+        type: number
+        format: float
+      currency:
+        type: string
+  voucher:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string
+      barcode:
+        type: string
+      date_of_scan:
+        type: string
+        format: date
+      date_of_receipt:
+        type: string
+        format: date
+      note:
+        type: string
+  corrupt:
+    type: object
+    properties:
+      accounting_data:
+        $ref: '#/definitions/accountingData'
+      file_line:
+        type: integer
+      message:
+        type: string
+
+  error:
+    type: object
+    properties:
+      id:
+        type: integer
+      message:
+        type: string
