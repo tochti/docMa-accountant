@@ -78,6 +78,7 @@ func (r *AccountingTxsFileReader) Read() (accountingData.AccountingData, error) 
 
 	a, err := ParseAccountingData(record)
 	if err != nil {
+		err = fmt.Errorf("line: %v %v", r.line, err)
 		return accountingData.AccountingData{}, err
 	}
 
@@ -95,6 +96,7 @@ func NewParseError(record []string, field int, msg string) error {
 }
 
 // Erstelle aus einem CSV Record, falls möglich, ein AccountingData Objekt
+// todo(tochti): Zerlege Funktion
 func ParseAccountingData(record []string) (accountingData.AccountingData, error) {
 
 	acc := accountingData.AccountingData{}
@@ -109,19 +111,19 @@ func ParseAccountingData(record []string) (accountingData.AccountingData, error)
 	} else {
 		date, err := ParseGermanDate(record[0], ".")
 		if err != nil {
-			msg := "Cannot parse date of entry - " + err.Error()
+			msg := "Cannot parse voucher date - " + err.Error()
 			return accountingData.AccountingData{},
 				NewParseError(record, 1, msg)
 		}
-		acc.DateOfEntry = date
+		acc.DocDate = date
 
 		date, err = ParseGermanDate(record[1], ".")
 		if err != nil {
-			msg := "Cannot parse voucher date - " + err.Error()
+			msg := "Cannot parse date of entry - " + err.Error()
 			return accountingData.AccountingData{},
 				NewParseError(record, 2, msg)
 		}
-		acc.DocDate = date
+		acc.DateOfEntry = date
 
 		acc.DocNumberRange = record[2]
 		acc.DocNumber = record[3]
@@ -137,29 +139,43 @@ func ParseAccountingData(record []string) (accountingData.AccountingData, error)
 	}
 	acc.AmountPosted = fl
 
-	in, err := strconv.Atoi(record[6])
-	if err != nil {
-		msg := "debit account is not a integer - " + err.Error()
-		return accountingData.AccountingData{},
-			NewParseError(record, 7, msg)
-	}
-	acc.DebitAccount = in
+	if record[6] != "" {
+		in, err := strconv.Atoi(record[6])
+		if err != nil {
+			msg := "debit account is not a integer - " + err.Error()
+			return accountingData.AccountingData{},
+				NewParseError(record, 7, msg)
+		}
 
-	in, err = strconv.Atoi(record[7])
-	if err != nil {
-		msg := "credit account is not a integer - " + err.Error()
-		return accountingData.AccountingData{},
-			NewParseError(record, 8, msg)
+		acc.DebitAccount = in
+	} else {
+		acc.DebitAccount = 0
 	}
-	acc.CreditAccount = in
 
-	in, err = strconv.Atoi(record[8])
-	if err != nil {
-		msg := "tax code is not a integer - " + err.Error()
-		return accountingData.AccountingData{},
-			NewParseError(record, 9, msg)
+	if record[7] != "" {
+		in, err := strconv.Atoi(record[7])
+		if err != nil {
+			msg := "credit account is not a integer - " + err.Error()
+			return accountingData.AccountingData{},
+				NewParseError(record, 8, msg)
+		}
+
+		acc.CreditAccount = in
+	} else {
+		acc.CreditAccount = 0
 	}
-	acc.TaxCode = in
+
+	if record[8] != "" {
+		in, err := strconv.Atoi(record[8])
+		if err != nil {
+			msg := "tax code is not a integer - " + err.Error()
+			return accountingData.AccountingData{},
+				NewParseError(record, 9, msg)
+		}
+		acc.TaxCode = in
+	} else {
+		acc.TaxCode = 0
+	}
 
 	acc.CostUnit1 = record[9]
 	acc.CostUnit2 = record[10]
@@ -180,6 +196,13 @@ func ParseAccountingData(record []string) (accountingData.AccountingData, error)
 
 // Ist der übergeben Datensatz eine Teilbuchung?
 func IsTxPart(a accountingData.AccountingData) bool {
+	if (a.DocDate.IsZero() == true) &&
+		(a.DateOfEntry.IsZero() == true) &&
+		(a.DocNumberRange == "") &&
+		(a.DocNumber == "") {
+		return true
+	}
+
 	return false
 }
 
