@@ -1,0 +1,4 @@
+"Belegdatum";"Buchungsdatum";"Belegnummernkreis";"Belegnummer";"Buchungstext";"Buchungsbetrag";"Sollkonto";"Habenkonto";"Steuerschlüssel";"Kostenstelle 1";"Kostenstelle 2";"Buchungsbetrag Euro";"Währung"
+29.08.2013;01.09.2013;"B";"6";"Lastschrift Strato";7,99;71003;1210;0;"";"";7,99;"EUR"
+29.08.2013;01.09.2013;"B";"8";"EC-Karte Martin Sigle";12,00;4970;1210;0;"100";"110";12,00;"EUR"
+01.12.2013;02.12.2013;"B";"7";"Gewerbeanmeldung Stadt KA";26,00;4390;1310;0;"001";"";26,00;"EUR"
