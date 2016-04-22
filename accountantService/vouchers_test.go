@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tochti/docMa-accountant/service/accountingTxsFileReader"
+	"github.com/tochti/docMa-accountant/accountantService/accountingTxsFileReader"
 	"github.com/tochti/docMa-handler/accountingData"
 	"github.com/tochti/docMa-handler/docs"
 	"github.com/tochti/gin-gum/gumspecs"
