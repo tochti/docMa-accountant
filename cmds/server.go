@@ -1,4 +1,4 @@
-package cmds
+package main
 
 import (
 	"path"
@@ -10,9 +10,9 @@ import (
 func main() {
 
 	httpSpecs := gumspecs.ReadHTTPServer()
-	specs := service.ReadSepcs()
+	specs := accountantService.ReadSpecs("ACCOUNTANT")
 
-	service := &accountantService.Service{
+	service := &service.Service{
 		Logger: log,
 		Specs:  specs,
 	}
@@ -30,8 +30,8 @@ func main() {
 		accountantService.GinAccountingTxsDecoder(service.AccountingTxs))
 	v1.GET("/vouchers",
 		accountantService.GinFindVouchersDecoder(service.AccountingTxs))
-	v1.GET("/verify",
-		accountantService.GinVerifyDecoder(service.AccountingTxs))
+	// v1.GET("/verify",
+	// 	accountantService.GinVerifyDecoder(service.AccountingTxs))
 
 	router.Run(httpSpecs.String())
 }

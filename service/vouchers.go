@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"gopkg.in/gorp.v1"
 
@@ -12,6 +13,42 @@ import (
 	"github.com/tochti/docMa-handler/accountingData"
 	"github.com/tochti/docMa-handler/docs"
 )
+
+func findVouchersByID(db *gorp.DbMap, id string) ([]docs.Doc, error) {
+	q := fmt.Sprintf(`
+		SELECT * 
+		FROM %v as docs, %v as doc_numbers 
+		WHERE doc_numbers.number=?
+		AND docs.id=doc_numbers.doc_id
+		`, docs.DocsTable, docs.DocNumbersTable)
+
+	dl := []docs.Doc{}
+	_, err := db.Select(&dl, q, id)
+	if err != nil {
+		return []docs.Doc{}, err
+	}
+
+	return dl, nil
+
+}
+
+func findVouchersByAccountNumber(db *gorp.DbMap, accountNumber int, date time.Time) ([]docs.Doc, error) {
+	q := fmt.Sprintf(`
+		SELECT *
+		FROM %v as docs, %v as account_data
+		WHERE account_data.period_from <= ?
+		AND account_data.period_to >= ?
+		AND docs.id=account_data.doc_id
+	`, docs.DocsTable, docs.DocAccountDataTable)
+
+	dl := []docs.Doc{}
+	_, err := db.Select(&dl, q, accountNumber, date, date)
+	if err != nil {
+		return []docs.Doc{}, err
+	}
+
+	return dl, nil
+}
 
 // Find alle Buchungen die keinen Belge-Datei haben s. auch Verify Funktion
 func FindAccountingTxsWithoutVouchers(db *gorp.DbMap, filePath string, voucherFilesDir string) ([]accountingData.AccountingData, error) {
