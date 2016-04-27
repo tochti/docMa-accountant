@@ -79,15 +79,5 @@ func initDB(logger *log.Logger) *gorp.DbMap {
 
 	docs.AddTables(db)
 
-	err = db.DropTablesIfExists()
-	if err != nil {
-		logger.Fatal(err)
-	}
-	err = db.CreateTablesIfNotExists()
-	if err != nil {
-		logger.Fatal(err)
-	}
-
 	return db
-
 }
