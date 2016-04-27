@@ -21,7 +21,7 @@ type (
 	AccountantService interface {
 		ReadAccountingTxs() ([]accountingData.AccountingData, error)
 		FindVouchers(id string, accountNumber int, voucherDate time.Time) ([]docs.Doc, error)
-		Verify() ([]CorruptAccountingTx, Error)
+		Verify() (Corrupts, error)
 	}
 
 	Service struct {
@@ -36,14 +36,14 @@ type (
 		Message        string
 	}
 
+	Corrupts struct {
+		AccountingData []accountingData.AccountingData
+		Docs           []docs.Doc
+	}
+
 	ErrorResponse struct {
 		ID      int64
 		Message error
-	}
-
-	Error interface {
-		ID() int64
-		Error() string
 	}
 
 	fail struct {
@@ -51,21 +51,6 @@ type (
 		err error
 	}
 )
-
-func NewError(id int64, err error) fail {
-	return fail{
-		id:  id,
-		err: err,
-	}
-}
-
-func (f fail) ID() int64 {
-	return f.id
-}
-
-func (f fail) Error() string {
-	return f.err.Error()
-}
 
 // Lese CSV Datei mit Buchungen und weise diesen die passenden Buchungsbelege zu.
 func (s *Service) ReadAccountingTxs() ([]accountingData.AccountingData, error) {
@@ -184,20 +169,26 @@ func GinFindVouchersDecoder(fn AccountantService) gin.HandlerFunc {
 // Überprüfe Buchungsbelege auf logische Fehler.
 // Welche Belege fehlen, d. h. für welche Datensätze in der CSV keine PDF existiert.
 // Haben zwei PDFs die gleiche Belegnummer.
-func (s *Service) Verify() ([]CorruptAccountingTx, Error) {
-	// [] := FindAccountingTxsWithoutVouchers(s.Specs)
-	return []CorruptAccountingTx{}, nil
+func (s *Service) Verify() (Corrupts, error) {
+	txs, err := FindAccountingTxsWithoutVouchers(s.DB, s.Specs.AccountingTxsFile)
+	if err != nil {
+		return Corrupts{}, nil
+	}
+	c := Corrupts{
+		AccountingData: txs,
+	}
+	return c, nil
 }
 
 func GinVerifyDecoder(fn AccountantService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		corrupts, err := fn.Verify()
-		if len(corrupts) > 0 {
+		if len(corrupts.AccountingData) > 0 || len(corrupts.Docs) > 0 {
 			c.JSON(http.StatusTeapot, corrupts)
 		} else if err != nil {
 			c.JSON(http.StatusBadRequest,
 				ErrorResponse{
-					ID:      err.ID(),
+					ID:      3,
 					Message: err,
 				},
 			)

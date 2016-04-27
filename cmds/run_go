@@ -1,0 +1,17 @@
+#!/bin/bash
+
+export ACCOUNTANT_MYSQL_USER="tochti"
+export ACCOUNTANT_MYSQL_PASSWORD="123"
+export ACCOUNTANT_MYSQL_HOST="localhost"
+export ACCOUNTANT_MYSQL_PORT=3306
+export ACCOUNTANT_MYSQL_DB_NAME=docma
+
+export ACCOUNTANT_PUBLIC_DIR=/home/wirrwarr/devdata/docMa/docma-accountant-public
+export ACCOUNTANT_PDFVIEWER_PUBLIC_DIR=/home/wirrwarr/devdata/pdfviewer/public
+export ACCOUNTANT_VOUCHERS_DIR=/home/wirrwarr/devdata/docMa/docs
+export ACCOUNTANT_ACCOUNTING_TXS_FILE=/home/wirrwarr/devdata/docMa/export.csv
+
+export ACCOUNTANT_HTTP_HOST="localhost"
+export ACCOUNTANT_HTTP_PORT=8080
+
+go $@

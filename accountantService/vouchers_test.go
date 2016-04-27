@@ -116,76 +116,94 @@ func Test_FindVouchersByAccountNumber(t *testing.T) {
 }
 
 func Test_FindAccountingTxsWithoutVouchers(t *testing.T) {
-	t.Skip("Fix later")
-	txFile := path.Join(TestData, "export.csv")
 	db := initGorpConn(t)
-	createVouchersInDB(t, db, txFile)
 
-	// remove db entry
-
-	a, err := FindAccountingTxsWithoutVouchers(db, path.Join(TestData, "export.csv"), TestData)
-	fmt.Println(a)
-	if err != nil {
-		t.Fatal(err)
+	cases := []struct {
+		TxsFile       string
+		LinesToImport int
+		Expected      []accountingData.AccountingData
+	}{
+		{
+			TxsFile:       path.Join(TestData, "export.csv"),
+			LinesToImport: 2,
+			Expected: []accountingData.AccountingData{
+				{
+					DocDate:          time.Date(2013, 12, 1, 0, 0, 0, 0, time.UTC),
+					DateOfEntry:      time.Date(2013, 12, 2, 0, 0, 0, 0, time.UTC),
+					DocNumberRange:   "B",
+					DocNumber:        "7",
+					PostingText:      "Gewerbeanmeldung Stadt KA",
+					AmountPosted:     26.00,
+					DebitAccount:     4390,
+					CreditAccount:    1310,
+					TaxCode:          0,
+					CostUnit1:        "001",
+					CostUnit2:        "",
+					AmountPostedEuro: 26.00,
+					Currency:         "EUR",
+				},
+			},
+		},
 	}
 
-	// 29.08.2013;01.09.2013;"B";"7";"Gewerbeanmeldung Stadt KA";26,00;4390;1210;0;"001";"";26,00;"EUR"
-	eAccTx := accountingData.AccountingData{
-		DocDate:          time.Date(2013, 12, 1, 0, 0, 0, 0, time.UTC),
-		DateOfEntry:      time.Date(2013, 12, 2, 0, 0, 0, 0, time.UTC),
-		DocNumberRange:   "B",
-		DocNumber:        "7",
-		PostingText:      "Gewerbeanmeldung Stadt KA",
-		AmountPosted:     26.00,
-		DebitAccount:     4390,
-		CreditAccount:    1310,
-		TaxCode:          0,
-		CostUnit1:        "001",
-		CostUnit2:        "",
-		AmountPostedEuro: 26.00,
-		Currency:         "EUR",
-	}
+	for i, tc := range cases {
+		docs.AddTables(db)
 
-	accTx := a[0]
-	assert.Equal(t, eAccTx, accTx)
+		err := db.DropTablesIfExists()
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = db.CreateTablesIfNotExists()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		fh, err := os.Open(tc.TxsFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		txs := accountingTxsFileReader.NewReader(fh)
+		for x := 0; x < tc.LinesToImport; x++ {
+			tx, err := txs.Read()
+			if err != nil {
+				t.Fatal(err)
+			}
+			createVoucherInDB(t, db, fmt.Sprintf("test-%v_%v.pdf", i, x), tx)
+		}
+
+		a, err := FindAccountingTxsWithoutVouchers(db, path.Join(TestData, "export.csv"))
+		if err != nil {
+			t.Fatal("Case %v: %v", i, err)
+		}
+
+		if len(a) != len(tc.Expected) {
+			t.Fatalf("Case %v: Expect len %v was %v", i, len(tc.Expected), len(a))
+		}
+
+		for i, expect := range tc.Expected {
+			assert.Equal(t, expect, a[i])
+		}
+	}
 
 }
 
-func createVouchersInDB(t *testing.T, db *gorp.DbMap, txFile string) {
-	docs.AddTables(db)
-
-	err := db.DropTablesIfExists()
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = db.CreateTablesIfNotExists()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	f, err := os.Open(txFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	r := accountingTxsFileReader.NewReader(f)
-
+func createVoucherInDB(t *testing.T, db *gorp.DbMap, filename string, tx accountingData.AccountingData) docs.Doc {
 	// Erzeuge Belegeintrag desen Belegzeitraum zu einer Buchung passt.
-	a, err := r.Read()
-
 	doc := docs.Doc{
-		Name: "test1.pdf",
+		Name: filename,
 	}
 
-	err = db.Insert(&doc)
+	err := db.Insert(&doc)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	docAccountData := docs.DocAccountData{
 		DocID:         doc.ID,
-		PeriodFrom:    a.DocDate.Add(-24 * time.Hour),
-		PeriodTo:      a.DocDate.Add(24 * time.Hour),
-		AccountNumber: a.CreditAccount,
+		PeriodFrom:    tx.DocDate.Add(-24 * time.Hour),
+		PeriodTo:      tx.DocDate.Add(24 * time.Hour),
+		AccountNumber: tx.CreditAccount,
 	}
 
 	err = db.Insert(&docAccountData)
@@ -193,19 +211,7 @@ func createVouchersInDB(t *testing.T, db *gorp.DbMap, txFile string) {
 		t.Fatal(err)
 	}
 
-	// Erzeuge einen Belegeintrag desen Belegnummer zu einer Buchung passt.
-	a, err = r.Read()
-
-	doc = docs.Doc{
-		Name: "test2.pdf",
-	}
-
-	err = db.Insert(&doc)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	docNumber := a.DocNumberRange + a.DocNumber
+	docNumber := tx.DocNumberRange + tx.DocNumber
 	dn := docs.DocNumber{
 		DocID:  doc.ID,
 		Number: docNumber,
@@ -214,6 +220,8 @@ func createVouchersInDB(t *testing.T, db *gorp.DbMap, txFile string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	return doc
 }
 
 func setenvTest() {

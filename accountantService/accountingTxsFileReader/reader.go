@@ -90,6 +90,19 @@ func (r *AccountingTxsFileReader) Read() (accountingData.AccountingData, error) 
 	return a, nil
 }
 
+func (r *AccountingTxsFileReader) Reset() error {
+	_, err := r.fh.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	// Skip Headline
+	r.Read()
+
+	return nil
+
+}
+
 func NewParseError(record []string, field int, msg string) error {
 	s := "record: %v, field: %v - %v"
 	return fmt.Errorf(s, record, field, msg)

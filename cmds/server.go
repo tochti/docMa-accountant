@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/tochti/docMa-accountant/accountantService"
+	"github.com/tochti/docMa-handler"
 	"github.com/tochti/docMa-handler/docs"
 	"github.com/tochti/gin-gum/gumspecs"
 )
@@ -40,6 +41,7 @@ func main() {
 	htmlDir := path.Join(specs.PublicDir, "html")
 
 	router := gin.New()
+	router.Use(bebber.Serve("/", bebber.LocalFile(htmlDir, false)))
 	router.Static("/html", htmlDir)
 	router.Static("/public", specs.PublicDir)
 	router.Static("/data", specs.VouchersDir)
@@ -50,8 +52,8 @@ func main() {
 		accountantService.GinReadAccountingTxsDecoder(service))
 	v1.GET("/vouchers",
 		accountantService.GinFindVouchersDecoder(service))
-	// v1.GET("/verify",
-	// 	accountantService.GinVerifyDecoder(service))
+	v1.GET("/verify",
+		accountantService.GinVerifyDecoder(service))
 
 	router.Run(httpSpecs.String())
 }
