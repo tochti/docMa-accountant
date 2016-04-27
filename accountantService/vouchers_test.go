@@ -11,7 +11,6 @@ import (
 	"github.com/tochti/docMa-accountant/accountantService/accountingTxsFileReader"
 	"github.com/tochti/docMa-handler/accountingData"
 	"github.com/tochti/docMa-handler/docs"
-	"github.com/tochti/gin-gum/gumspecs"
 	"gopkg.in/gorp.v1"
 )
 
@@ -37,14 +36,14 @@ func Test_FindVouchersByID(t *testing.T) {
 		},
 	}
 
-	db := setupTestDB(t)
-	srv := Service{
-		DB: db,
-	}
 	for k, tc := range cases {
+		db := SetupTestDB(t)
+		srv := Service{
+			DB: db,
+		}
 
 		for i, expect := range tc.Expected {
-			resetTestTables(t, db)
+			SetupTestDB(t)
 			err := db.Insert(&tc.Expected[i], &docs.DocNumber{tc.Expected[i].ID, tc.Number})
 			if err != nil {
 				t.Fatal(err)
@@ -81,14 +80,13 @@ func Test_FindVouchersByAccountNumber(t *testing.T) {
 		},
 	}
 
-	db := setupTestDB(t)
-	srv := Service{
-		DB: db,
-	}
 	for k, tc := range cases {
 
 		for i, expect := range tc.Expected {
-			resetTestTables(t, db)
+			db := SetupTestDB(t)
+			srv := Service{
+				DB: db,
+			}
 			err := db.Insert(
 				&tc.Expected[i],
 				&docs.DocAccountData{
@@ -222,65 +220,4 @@ func createVoucherInDB(t *testing.T, db *gorp.DbMap, filename string, tx account
 	}
 
 	return doc
-}
-
-func setenvTest() {
-	os.Clearenv()
-
-	os.Setenv("MYSQL_USER", "tochti")
-	os.Setenv("MYSQL_PASSWORD", "123")
-	os.Setenv("MYSQL_HOST", "127.0.0.1")
-	os.Setenv("MYSQL_PORT", "3306")
-	os.Setenv("MYSQL_DB_NAME", TestDBName)
-}
-
-func initGorpConn(t *testing.T) *gorp.DbMap {
-	setenvTest()
-	//gumspecs.AppName = "test"
-	mysql := gumspecs.ReadMySQL()
-	if mysql == nil {
-		t.Fatal("Error in MySQL config")
-	}
-
-	c, err := mysql.DB()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return &gorp.DbMap{
-		Db: c,
-		Dialect: gorp.MySQLDialect{
-			"InnonDB",
-			"UTF8",
-		},
-	}
-}
-
-func setupTestDB(t *testing.T) *gorp.DbMap {
-	db := initGorpConn(t)
-	docs.AddTables(db)
-
-	err := db.DropTablesIfExists()
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = db.CreateTablesIfNotExists()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return db
-}
-
-func resetTestTables(t *testing.T, db *gorp.DbMap) {
-	docs.AddTables(db)
-
-	err := db.DropTablesIfExists()
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = db.CreateTablesIfNotExists()
-	if err != nil {
-		t.Fatal(err)
-	}
 }

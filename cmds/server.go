@@ -12,21 +12,21 @@ import (
 	"github.com/tochti/docMa-accountant/accountantService"
 	"github.com/tochti/docMa-handler"
 	"github.com/tochti/docMa-handler/docs"
-	"github.com/tochti/gin-gum/gumspecs"
+)
+
+const (
+	APPNAME = "accountant"
 )
 
 func main() {
 
-	app := "accountant"
+	logger := log.New(os.Stdout, fmt.Sprintf("%v: ", APPNAME), log.LstdFlags)
 
-	logger := log.New(os.Stdout, fmt.Sprintf("%v: ", app), log.LstdFlags)
-
-	gumspecs.AppName = app
-	httpSpecs := gumspecs.ReadHTTPServer()
-	if httpSpecs == nil {
-		logger.Fatal("Error in server config")
+	httpSpecs, err := accountantService.ReadHTTPServerSpecs(APPNAME)
+	if err != nil {
+		logger.Fatal(err)
 	}
-	specs, err := accountantService.ReadSpecs(app)
+	specs, err := accountantService.ReadSpecs(APPNAME)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -59,9 +59,9 @@ func main() {
 }
 
 func initDB(logger *log.Logger) *gorp.DbMap {
-	mysql := gumspecs.ReadMySQL()
-	if mysql == nil {
-		logger.Fatal("Error in MySQL config")
+	mysql, err := accountantService.ReadMySQLSpecs(APPNAME)
+	if err != nil {
+		logger.Fatal(err)
 	}
 
 	c, err := mysql.DB()

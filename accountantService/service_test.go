@@ -39,7 +39,7 @@ func Test_ReadAccountingTxs(t *testing.T) {
 		},
 	}
 
-	db := setupTestDB(t)
+	db := SetupTestDB(t)
 	for k, tc := range cases {
 		os.Setenv("TEST_ACCOUNTING_TXS_FILE", tc.TxFile)
 		s, err := ReadSpecs("TEST")
@@ -80,17 +80,16 @@ func TestService_FindVouchersByID(t *testing.T) {
 				DateOfScan:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 				DateOfReceipt: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
-			Expected: `[{"id":1,"name":"alfonso","barcode":"","date_of_scan":"2000-01-01T01:00:00+01:00","date_of_receipt":"2000-01-01T01:00:00+01:00","note":""}]`,
+			Expected: `[{"id":1,"name":"alfonso","barcode":"","date_of_scan":"2000-01-01T00:00:00Z","date_of_receipt":"2000-01-01T00:00:00Z","note":""}]`,
 		},
 	}
 
-	db := setupTestDB(t)
-	srv := &Service{
-		DB: db,
-	}
 	for k, tc := range cases {
+		db := SetupTestDB(t)
+		srv := &Service{
+			DB: db,
+		}
 
-		resetTestTables(t, db)
 		err := db.Insert(&tc.Doc, &docs.DocNumber{tc.Doc.ID, tc.DocNumber})
 		if err != nil {
 			t.Fatal(err)
@@ -130,17 +129,16 @@ func TestService_FindVouchersByAccountNumber(t *testing.T) {
 				DateOfScan:    time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 				DateOfReceipt: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
-			Expected: `[{"id":1,"name":"alfonso","barcode":"","date_of_scan":"2000-01-01T01:00:00+01:00","date_of_receipt":"2000-01-01T01:00:00+01:00","note":""}]`,
+			Expected: `[{"id":1,"name":"alfonso","barcode":"","date_of_scan":"2000-01-01T00:00:00Z","date_of_receipt":"2000-01-01T00:00:00Z","note":""}]`,
 		},
 	}
 
-	db := setupTestDB(t)
-	srv := &Service{
-		DB: db,
-	}
 	for k, tc := range cases {
+		db := SetupTestDB(t)
+		srv := &Service{
+			DB: db,
+		}
 
-		resetTestTables(t, db)
 		err := db.Insert(
 			&tc.Doc,
 			&docs.DocAccountData{
